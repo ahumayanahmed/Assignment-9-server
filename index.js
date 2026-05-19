@@ -40,6 +40,28 @@ async function run() {
       res.json(result);
     });
 
+app.get("/booking/:email", async (req, res) => {
+  try {
+    const email = req.params.email;
+
+    const query = {
+      ownerEmail: email,
+    };
+
+    const result = await bookingCollection
+      .find(query)
+      .toArray();
+
+    res.send(result);
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).send({
+      message: "Failed to fetch data",
+    });
+  }
+});
+
     app.get("/booking", async (req, res) => {
       const result = await bookingCollection.find().toArray();
       res.json(result);

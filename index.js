@@ -62,7 +62,41 @@ app.get("/booking/:email", async (req, res) => {
       res.json(result);
     });
 
-    
+    app.patch("/booking/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const updatedRoom = req.body;
+
+    const result = await bookingCollection.updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          name: updatedRoom.name,
+          image: updatedRoom.image,
+          floor: updatedRoom.floor,
+          capacity: updatedRoom.capacity,
+          hourlyRate: updatedRoom.hourlyRate,
+          description: updatedRoom.description,
+          amenities: updatedRoom.amenities,
+        },
+      }
+    );
+
+    res.send({
+      success: true,
+      message: "Room updated successfully",
+      result,
+    });
+
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+
 
 app.post("/bookings", async (req, res) => {
   try {

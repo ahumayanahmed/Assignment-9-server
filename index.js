@@ -88,7 +88,57 @@ app.get("/bookings", async (req, res) => {
       res.json(result);
     });
 
-    
+
+const { ObjectId } = require("mongodb");
+
+app.delete("/booking/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    const result = await bookingCollection.deleteOne({
+      _id: new ObjectId(id),
+    });
+
+    res.send({
+      success: true,
+      message: "Booking deleted",
+      result,
+    });
+  } catch (err) {
+    res.status(500).send({
+      success: false,
+      error: err.message,
+    });
+  }
+});
+
+
+
+app.patch("/bookings/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    const result = await bookingsCollection.updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          status: "cancelled",
+        },
+      }
+    );
+
+    res.send({
+      success: true,
+      message: "Booking cancelled",
+      result,
+    });
+  } catch (err) {
+    res.status(500).send({
+      success: false,
+      error: err.message,
+    });
+  }
+});
 
 
     await client.db("admin").command({ ping: 1 });

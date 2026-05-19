@@ -57,10 +57,10 @@ app.get("/booking/:email", async (req, res) => {
   res.send(result);
 });
 
-    app.get("/booking", async (req, res) => {
-      const result = await bookingCollection.find().toArray();
-      res.json(result);
-    });
+    // app.get("/booking", async (req, res) => {
+    //   const result = await bookingCollection.find().toArray();
+    //   res.json(result);
+    // });
 
     app.patch("/booking/:id", async (req, res) => {
   try {
@@ -95,6 +95,68 @@ app.get("/booking/:email", async (req, res) => {
     });
   }
 });
+
+
+
+app.get("/booking", async (req, res) => {
+  try {
+    const { search, amenity, floor, price, sort } = req.query;
+
+    let query = {};
+
+    // SEARCH
+    if (search) {
+      query.name = {
+        $regex: search,
+        $options: "i",
+      };
+    }
+
+    // AMENITY
+    if (amenity) {
+      query.amenities = {
+        $in: [amenity],
+      };
+    }
+
+    // FLOOR
+    if (floor) {
+      query.floor = floor;
+    }
+
+    // SORT
+    let sortOption = {};
+
+    if (sort === "newest") {
+      sortOption = { _id: -1 };
+    }
+
+    if (sort === "oldest") {
+      sortOption = { _id: 1 };
+    }
+
+    if (price === "low") {
+      sortOption = { hourlyRate: 1 };
+    }
+
+    if (price === "high") {
+      sortOption = { hourlyRate: -1 };
+    }
+
+    const rooms = await bookingCollection
+      .find(query)
+      .sort(sortOption)
+      .toArray();
+
+    res.send(rooms);
+
+  } catch (error) {
+    res.status(500).send({
+      error: error.message,
+    });
+  }
+});
+
 
 
 

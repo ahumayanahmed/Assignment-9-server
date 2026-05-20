@@ -2,6 +2,7 @@ const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const { MongoClient, ServerApiVersion } = require("mongodb");
+const { createRemoteJWKSet , jwtVerify} = require("jose-cjs");
 
 dotenv.config();
 
@@ -26,6 +27,47 @@ const client = new MongoClient(uri, {
   },
 });
 
+
+ const JWKS = createRemoteJWKSet(new URL(`${process.env.BETTER_AUTH_URL}/api/auth/jwks`));
+
+const verifyToken = async (req, res, next) => {
+  const authHeader = req?.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  try {
+
+    const { payload } = await jwtVerify(token, JWKS);
+
+    // email save
+    req.user = payload;
+
+    // email match check
+    if (
+      req.params.email &&
+      payload.email !== req.params.email
+    ) {
+      return res
+        .status(403)
+        .send({ message: "Forbidden Access" });
+    }
+
+    next();
+
+  } catch (error) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+};
+
+
 async function run() {
   try {
     await client.connect();
@@ -35,7 +77,7 @@ async function run() {
     const bookingCollection = db.collection("booking");
     const bookingsCollection = db.collection("bookings");
 
-   app.post("/booking", async (req, res) => {
+   app.post("/booking",verifyToken,  async (req, res) => {
       const bookingData = req.body;
       console.log(bookingData);
       const result = await bookingCollection.insertOne(bookingData);
@@ -62,7 +104,7 @@ app.get("/booking/:email", async (req, res) => {
     //   res.json(result);
     // });
 
-    app.patch("/booking/:id", async (req, res) => {
+    app.patch("/booking/:id",verifyToken, async (req, res) => {
   try {
     const id = req.params.id;
     const updatedRoom = req.body;
@@ -160,7 +202,7 @@ app.get("/booking", async (req, res) => {
 
 
 
-app.post("/bookings", async (req, res) => {
+app.post("/bookings",verifyToken, async (req, res) => {
   try {
     const booking = req.body;
 
@@ -187,7 +229,7 @@ app.get("/bookings", async (req, res) => {
 
 const { ObjectId } = require("mongodb");
 
-app.delete("/booking/:id", async (req, res) => {
+app.delete("/booking/:id",verifyToken, async (req, res) => {
   try {
     const id = req.params.id;
 
@@ -210,7 +252,7 @@ app.delete("/booking/:id", async (req, res) => {
 
 
 
-app.patch("/bookings/:id", async (req, res) => {
+app.patch("/bookings/:id",verifyToken, async (req, res) => {
   try {
     const id = req.params.id;
 

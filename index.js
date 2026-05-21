@@ -332,7 +332,7 @@ async function run() {
     const result = await bookingsCollection.updateOne(
       {
         _id: new ObjectId(id),
-        ownerEmail: req.user.email, // FIXED
+        ownerEmail: req.user.email, 
       },
       {
         $set: {
